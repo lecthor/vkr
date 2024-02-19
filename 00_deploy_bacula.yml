@@ -1,0 +1,6 @@
+- hosts: bacula_director
+  vars:
+    role_path: 'roles/bacula/'
+  tasks:
+    - include_role:
+        name: bacula

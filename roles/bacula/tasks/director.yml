@@ -1,0 +1,56 @@
+- name: Install bacula package
+  community.general.apt_rpm:
+    pkg:
+      bacula13-director-postgresql
+    state: present
+
+- name:  Dependency for postgresql_ping
+  community.general.apt_rpm:
+    pkg:
+      python3-module-psycopg2
+    state: present
+
+- name: Install database backend for bacula director
+  community.general.apt_rpm:
+    pkg:
+      postgresql16-server
+    state: present
+
+- name: Find out if PostgreSQL is initialized
+  ansible.builtin.stat:
+    path: /var/lib/pgsql/data/pg_hba.conf
+  register: postgres_data
+
+- name: Initialize PostgreSQL
+  shell: /etc/init.d/postgresql initdb
+  when: not postgres_data.stat.exists
+
+- name: Start PostgreSQL server
+  service:
+    name: postgresql
+    state: started
+
+- name:  Check if bacula data already exists in postgres
+  postgresql_ping:
+    db: bacula
+  become: yes
+  become_user: postgres
+  become_method: su
+  become_flags: '-s /bin/sh'
+  vars:
+    ansible_remote_tmp: '$TMPDIR'
+  register: bacula_postgres
+
+- name: Initialize bacula database
+  shell: "./{{item}}"
+  args:
+    chdir: /usr/share/bacula/scripts
+  with_items:
+    - create_bacula_database
+    - make_bacula_tables
+    - grant_bacula_privileges
+  become: true
+  become_user: postgres
+  become_method: su
+  become_flags: '-s /bin/sh'
+  when: not bacula_postgres.is_available
