@@ -30,27 +30,25 @@
     name: postgresql
     state: started
 
-- name:  Check if bacula data already exists in postgres
-  postgresql_ping:
-    db: bacula
-  become: yes
-  become_user: postgres
-  become_method: su
-  become_flags: '-s /bin/sh'
-  vars:
-    ansible_remote_tmp: '$TMPDIR'
-  register: bacula_postgres
+- name: Initialize bacula PostgreSQL backend
+  block:
+    - name:  Check if bacula data already exists in postgres
+      postgresql_ping:
+        db: bacula
+      vars:
+        ansible_remote_tmp: '$TMPDIR'
+      register: bacula_postgres
 
-- name: Initialize bacula database
-  shell: "./{{item}}"
-  args:
-    chdir: /usr/share/bacula/scripts
-  with_items:
-    - create_bacula_database
-    - make_bacula_tables
-    - grant_bacula_privileges
+    - name: Initialize bacula database
+      shell: "./{{item}}"
+      args:
+        chdir: /usr/share/bacula/scripts
+      with_items:
+        - create_bacula_database
+        - make_bacula_tables
+        - grant_bacula_privileges
+      when: not bacula_postgres.is_available
   become: true
   become_user: postgres
   become_method: su
   become_flags: '-s /bin/sh'
-  when: not bacula_postgres.is_available
