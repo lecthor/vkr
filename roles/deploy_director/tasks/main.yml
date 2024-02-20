@@ -1,4 +1,4 @@
-- name: Install bacula package
+- name: Install bacula director package
   community.general.apt_rpm:
     pkg:
       bacula13-director-postgresql
@@ -35,8 +35,6 @@
     - name:  Check if bacula data already exists in postgres
       postgresql_ping:
         db: bacula
-      vars:
-        ansible_remote_tmp: '$TMPDIR'
       register: bacula_postgres
 
     - name: Initialize bacula database
@@ -52,3 +50,6 @@
   become_user: postgres
   become_method: su
   become_flags: '-s /bin/sh'
+  vars:
+    ansible_remote_tmp: '$TMPDIR'
+

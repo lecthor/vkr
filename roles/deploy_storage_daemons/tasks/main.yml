@@ -1,0 +1,5 @@
+- name: Install bacula storage package
+  community.general.apt_rpm:
+    pkg:
+      bacula13-storage
+    state: present

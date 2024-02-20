@@ -1,0 +1,3 @@
+- name: Momo
+  debug:
+    msg: "{{ hostvars['bacula_director']['sd_new_pwd'] }}"
