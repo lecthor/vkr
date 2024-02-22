@@ -1,17 +1,17 @@
 - hosts: bacula_director
   tasks:
-    # Генерируем новый пароль, который будет использоваться директором и клиентами
-    - set_fact:
-        sd_new_pwd: "{{ lookup('password', '/dev/null length=22 chars=ascii_letters,digits,punctuation') }}"
-    #    - include_role:
-    #        name: deploy_director
-- hosts: bacula_clients
+    - name: Общий пароль для Director'а и Storage демонов
+      set_fact:
+        sd_password: "{{ lookup('password', '/dev/null length=22 chars=ascii_letters,digits,punctuation') }}"
+    - include_role:
+        name: deploy_director
+- hosts: bacula_storage_daemons
   tasks:
-    #    - include_role:
-    #        name: deploy_director
     - include_role:
         name: deploy_storage_daemons
-- hosts: bacula_director:bacula_clients
+- hosts: bacula_director:bacula_storage_daemons
+  vars:
+    sd_password: "{{hostvars['bacula_director']['sd_password']}}"
   tasks:
     - include_role: 
         name: new_sd_password

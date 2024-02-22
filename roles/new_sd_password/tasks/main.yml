@@ -1,3 +1,12 @@
-- name: Momo
-  debug:
-    msg: "{{ hostvars['bacula_director']['sd_new_pwd'] }}"
+- name: Общий пароль (Director <-> Storage Daemons) создан?
+  assert:
+    that:
+      - sd_password | length > 0
+
+- name: Общий пароль размещён на DIR и SD узлах
+  copy:
+    content: 'Password = "{{ sd_password }}"'
+    dest: /etc/bacula/bacula-sd-password.conf
+    group: bacula
+    owner: root
+    mode: 0640
