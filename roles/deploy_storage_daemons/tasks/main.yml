@@ -1,5 +1,32 @@
-- name: Install bacula storage package
+- name: Установить необходимое для Storage Daemon'а ПО
   community.general.apt_rpm:
     pkg:
       bacula13-storage
     state: present
+
+- name: Настроить Storage Daemon'ы на работу с Director'ом
+  template:
+    src: templates/bacula-sd.j2
+    dest: /etc/bacula/bacula-sd.conf
+    owner: root
+    group: bacula
+    mode: 0640
+    validate: /usr/sbin/bacula-sd -t -c %s
+    backup: yes
+
+- name: Создать устройство хранения для Storage Daemon'а
+  template:
+    src: templates/filestorage.j2
+    dest: /etc/bacula/device.d/filestorage.conf
+    owner: root
+    group: bacula
+    mode: 0640
+    validate: /usr/sbin/bacula-sd -t -c %s
+    backup: yes
+
+- name: Создать каталог для хранения резервных копий
+  file:
+    path: "{{ bacula_backup_dir }}"
+    state: directory
+    owner: bacula
+    group: bacula

@@ -3,7 +3,7 @@
     that:
       - sd_password | length > 0
 
-- name: Общий пароль размещён на DIR и SD узлах
+- name: Установить общий пароль на Director и Storage Daemon узлах
   copy:
     content: 'Password = "{{ sd_password }}"'
     dest: /etc/bacula/bacula-sd-password.conf

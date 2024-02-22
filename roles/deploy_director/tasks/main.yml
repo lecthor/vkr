@@ -1,55 +1,84 @@
-- name: Install bacula director package
-  community.general.apt_rpm:
-    pkg:
-      bacula13-director-postgresql
-    state: present
+#- name: Установить пакет Bacula Director'а
+#  community.general.apt_rpm:
+#    pkg:
+#      bacula13-director-postgresql
+#    state: present
+#
+#- name:  Пакет-зависимость для модуля postgresql_ping
+#  community.general.apt_rpm:
+#    pkg:
+#      python3-module-psycopg2
+#    state: present
+#
+#- name: Установить БД, в которой Director Daemon будет хранить свои данные
+#  community.general.apt_rpm:
+#    pkg:
+#      postgresql16-server
+#    state: present
+#
+#- name: Проверяем не была ли PostgreSQL инициализирована ранее
+#  ansible.builtin.stat:
+#    path: /var/lib/pgsql/data/pg_hba.conf
+#  register: postgres_data
+#
+#- name: Инициализируем PostgreSQL
+#  shell: /etc/init.d/postgresql initdb
+#  when: not postgres_data.stat.exists
+#
+#- name: Запускаем сервер PostgreSQL
+#  service:
+#    name: postgresql
+#    state: started
+#
+#- name: Инициализируем базу данных для Bacula
+#  block:
+#    - name:  Проверяем не содержатся ли данные Bacula в PostgreSQL?
+#      postgresql_ping:
+#        db: bacula
+#      register: bacula_postgres
+#
+#    - name: Инициализация БД
+#      shell: "./{{item}}"
+#      args:
+#        chdir: /usr/share/bacula/scripts
+#      with_items:
+#        - create_bacula_database
+#        - make_bacula_tables
+#        - grant_bacula_privileges
+#      when: not bacula_postgres.is_available
+#  become: true
+#  become_user: postgres
+#  become_method: su
+#  become_flags: '-s /bin/sh'
+#  vars:
+#    ansible_remote_tmp: '$TMPDIR'
+#
+#- name: asdsadads
+#  debug:
+#    msg: "{{ hostvars }}"
+- name: xxx
+  file:
+    path: /etc/bacula/storage.d/file.conf
+    state: absent
 
-- name:  Dependency for postgresql_ping
-  community.general.apt_rpm:
-    pkg:
-      python3-module-psycopg2
-    state: present
+- name: Создаём файл с описаниями Storage Daemon'ов
+  lineinfile:
+    path: /etc/bacula/storage.d/file.conf
+    mode: 0660
+    group: bacula
+    owner: root
+    create: true
+    # Проверять надо не созданный файл, а общий файл конфигурации, в который вставляется содержимое
+    # созданного файла. Использую костылец, т.к. validate требует наличи %s в команде
+    validate: "/usr/sbin/bacula-dir -t -c /etc/bacula/bacula-dir.conf # %s"
+    line: |
+      Storage {
+        Name = {{ hostvars[item]['inventory_hostname'] }}
+        Address = {{ ansible_host }}
+        SDPort = 9103
+      @/etc/bacula/bacula-sd-password.conf
+        Device = FileStorage
+        Media Type = File
+      }
 
-- name: Install database backend for bacula director
-  community.general.apt_rpm:
-    pkg:
-      postgresql16-server
-    state: present
-
-- name: Find out if PostgreSQL is initialized
-  ansible.builtin.stat:
-    path: /var/lib/pgsql/data/pg_hba.conf
-  register: postgres_data
-
-- name: Initialize PostgreSQL
-  shell: /etc/init.d/postgresql initdb
-  when: not postgres_data.stat.exists
-
-- name: Start PostgreSQL server
-  service:
-    name: postgresql
-    state: started
-
-- name: Initialize bacula PostgreSQL backend
-  block:
-    - name:  Check if bacula data already exists in postgres
-      postgresql_ping:
-        db: bacula
-      register: bacula_postgres
-
-    - name: Initialize bacula database
-      shell: "./{{item}}"
-      args:
-        chdir: /usr/share/bacula/scripts
-      with_items:
-        - create_bacula_database
-        - make_bacula_tables
-        - grant_bacula_privileges
-      when: not bacula_postgres.is_available
-  become: true
-  become_user: postgres
-  become_method: su
-  become_flags: '-s /bin/sh'
-  vars:
-    ansible_remote_tmp: '$TMPDIR'
-
+  with_items: "{{ groups['bacula_storage_daemons'] }}"

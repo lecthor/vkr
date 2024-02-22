@@ -1,0 +1,10 @@
+Device {
+  Name = FileStorage
+  Media Type = File
+  Archive Device = {{ bacula_backup_dir }}
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
+}
