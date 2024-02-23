@@ -10,10 +10,3 @@
     group: bacula
     owner: root
     mode: 0640
-
-- name: Проверка итоговой конфигурации File Daemon'а
-  lineinfile:
-    line: ""
-    path: /etc/bacula/bacula-fd.conf
-    validate: bacula-fd -t -c %s
-

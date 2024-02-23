@@ -4,7 +4,7 @@ Job {
   Level = Incremental
   Client = {{ item['inventory_hostname'] }}
   FileSet = "Full Set"
-  Storage = storage_daemon1
+  Storage = storage_daemon2
   Messages = Standard
   Pool = {{ pool_name }}
   Priority = 10
@@ -15,8 +15,9 @@ Job {
   Type = Restore
   Client = {{ item['inventory_hostname'] }}
   FileSet="Full Set"
-  Storage = storage_daemon1
+  Storage = storage_daemon2
   Pool = {{ pool_name }}
   Messages = Standard
   Where = /tmp/bacula-restores
 }
+

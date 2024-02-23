@@ -115,14 +115,26 @@
             group: bacula
             mode:  0770
 
-        - template:
-            src: "templates/job.d/{{ item['inventory_hostname'] }}.j2"
-            dest: "/etc/bacula/job.d/{{ item['inventory_hostname'] }}.conf"
-            owner: root
-            group: bacula
-            mode: 0640
-            backup: yes
-          with_items: "{{ groups['bacula_file_daemons'] | map('extract', hostvars) | list }}"
+        - vars:
+            pool_name: "{{ item['inventory_hostname'] }}-pool"
+          block:
+            - template:
+                src: "templates/job.d/{{ item['inventory_hostname'] }}.j2"
+                dest: "/etc/bacula/job.d/{{ item['inventory_hostname'] }}.conf"
+                owner: root
+                group: bacula
+                mode: 0640
+                backup: yes
+              with_items: "{{ groups['bacula_file_daemons'] | map('extract', hostvars) | list }}"
+
+            - template:
+                src: "templates/pool.d/{{ item['inventory_hostname'] }}.j2"
+                dest: "/etc/bacula/pool.d/{{ item['inventory_hostname'] }}.conf"
+                owner: root
+                group: bacula
+                mode: 0640
+                backup: yes
+              with_items: "{{ groups['bacula_file_daemons'] | map('extract', hostvars) | list }}"
 
         - name: Создаём файл с описаниями Storage Daemon'ов
           lineinfile:
