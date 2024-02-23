@@ -1,6 +1,11 @@
-- hosts: bacula_director
+# ansible-playbook -v 00_set_env.yml -k --ask-become-pass
+- hosts: hosts_to_set_env
   remote_user: sysadmin
   tasks:
     - become: true
       become_method: su
-      command: whoami
+      lineinfile: whoami
+      lineinfile:
+	path: /etc/hosts
+	state: present
+	line: 192.168.17.155 squid.vkr.alt
