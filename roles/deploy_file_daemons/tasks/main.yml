@@ -3,3 +3,12 @@
     pkg:
       bacula13-client
     state: present
+
+- template:
+    src: "templates/bacula-fd.j2"
+    dest: "/etc/bacula/bacula-fd.conf"
+    owner: root
+    group: bacula
+    mode: 0640
+    backup: yes
+    validate: bacula-fd -t -c %s

@@ -1,0 +1,43 @@
+#
+# Default  Bacula File Daemon Configuration file
+#
+#  For Bacula release 2.4.4 (28 December 2008) -- redhat 
+#
+# There is not much to change here except perhaps the
+# File daemon Name to
+#
+
+#
+# List Directors who are permitted to contact this File daemon
+#
+Director {
+  Name = {{ hostvars['bacula_director']['inventory_hostname'] }}
+@/etc/bacula/bacula-fd-password.conf
+}
+
+#
+# Restricted Director, used by tray-monitor to get the
+#   status of the file daemon
+#
+#Director {
+#  Name = dir-mon
+#  Password = ""
+#  Monitor = yes
+#}
+
+#
+# "Global" File daemon configuration specifications
+#
+FileDaemon {                          # this is me
+  Name = fd
+  FDport = 9102                  # where we listen for the director
+  WorkingDirectory = /var/lib/bacula
+  Pid Directory = /var/run/bacula
+  Maximum Concurrent Jobs = 20
+}
+
+# Send all messages except skipped files back to Director
+Messages {
+  Name = Standard
+  director = dir = all, !skipped, !restored
+}

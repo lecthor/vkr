@@ -31,3 +31,21 @@
   tasks:
     - include_role: 
         name: new_fd_password
+
+- hosts: bacula_file_daemons
+  tasks:
+    - service:
+        name: bacula-fd
+        state: restarted
+
+- hosts: bacula_storage_daemons
+  tasks:
+    - service:
+        name: bacula-sd
+        state: restarted
+
+- hosts: bacula_director
+  tasks:
+    - service:
+        name: bacula-dir
+        state: restarted

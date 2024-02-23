@@ -143,6 +143,14 @@
 
           with_items: "{{ groups['bacula_storage_daemons'] | map('extract', hostvars) | list }}"
 
+        - template:
+            src: "templates/bacula-dir.j2"
+            dest: "/etc/bacula/bacula-dir.conf"
+            owner: root
+            group: bacula
+            mode: 0640
+            backup: yes
+
         - name: Проверка итоговой конфигурации Director'а
           lineinfile:
             line: ""

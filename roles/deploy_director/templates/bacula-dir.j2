@@ -1,0 +1,48 @@
+Director {                            # define myself
+  Name = {{ inventory_hostname }}
+  DIRport = 9101                # where we listen for UA connections
+  QueryFile = "/usr/share/bacula/scripts/query.sql"
+  WorkingDirectory = "/var/lib/bacula"
+  PidDirectory = "/var/run/bacula"
+  Maximum Concurrent Jobs = 1
+@/etc/bacula/bacula-dir-password.conf
+  Messages = Daemon
+}
+
+# Generic catalog service
+Catalog {
+  Name = MyCatalog
+  dbname = bacula
+  user = bacula
+  password = "Specify password for catalog here"
+}
+
+#
+# Restricted console used by tray-monitor to get the status of the director
+#
+#Console {
+#  Name = localhost-mon
+#  Password = "Specify restricted console password here"
+#  CommandACL = status, .status
+#}
+
+# Jobs
+@|"sh -c 'for f in /etc/bacula/job.d/*.conf ; do echo @${f} ; done'"
+
+# File Sets
+@|"sh -c 'for f in /etc/bacula/fileset.d/*.conf ; do echo @${f} ; done'"
+
+# Schedules
+@|"sh -c 'for f in /etc/bacula/schedule.d/*.conf ; do echo @${f} ; done'"
+
+# Clients
+@|"sh -c 'for f in /etc/bacula/client.d/*.conf ; do echo @${f} ; done'"
+
+# Storages
+@|"sh -c 'for f in /etc/bacula/storage.d/*.conf ; do echo @${f} ; done'"
+
+# Messages
+@|"sh -c 'for f in /etc/bacula/messages.d/*.conf ; do echo @${f} ; done'"
+
+# Pools
+@|"sh -c 'for f in /etc/bacula/pool.d/*.conf ; do echo @${f} ; done'"
