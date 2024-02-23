@@ -1,0 +1,6 @@
+- hosts: bacula_director
+  remote_user: sysadmin
+  tasks:
+    - become: true
+      become_method: su
+      command: whoami
