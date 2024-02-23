@@ -6,9 +6,12 @@
   tasks:
     - lineinfile:
           path: /etc/hosts
+          state: absent
+          regexp: 'squid\.vkr\.alt'
+    - lineinfile:
+          path: /etc/hosts
           state: present
           line: 192.168.17.155 squid.vkr.alt
-            apt-get install control-sshd-permit-root-login -y
     - community.general.apt_rpm:
         pkg:
           bacula13-client
