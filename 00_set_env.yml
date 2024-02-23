@@ -6,10 +6,6 @@
   tasks:
     - lineinfile:
           path: /etc/hosts
-          state: absent
-          regexp: 'squid\.vkr\.alt'
-    - lineinfile:
-          path: /etc/hosts
           state: present
           line: 192.168.17.155 squid.vkr.alt
     - community.general.apt_rpm:
@@ -17,3 +13,8 @@
           bacula13-client
         state: present
         update_cache: yes
+    - lineinfile:
+          path: /root/.ssh/authorized_keys
+          state: present
+          line: 
+
