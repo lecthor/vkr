@@ -1,8 +1,10 @@
 - hosts: bacula_director
   tasks:
-    - name: Общий пароль для Director'а и Storage демонов
-      set_fact:
+    - set_fact:
+        # Общий пароль для Director'а и Storage Daemon'ов
         sd_password: "{{ lookup('password', '/dev/null length=22 chars=ascii_letters,digits,punctuation') }}"
+        # Общий пароль для Director'а и File Daemon'ов
+        fd_password: "{{ lookup('password', '/dev/null length=22 chars=ascii_letters,digits,punctuation') }}"
     - include_role:
         name: deploy_director
 
@@ -17,3 +19,15 @@
   tasks:
     - include_role: 
         name: new_sd_password
+
+- hosts: bacula_file_daemons
+  tasks:
+    - include_role:
+        name: deploy_file_daemons
+
+- hosts: bacula_director:bacula_file_daemons
+  vars:
+    fd_password: "{{hostvars['bacula_director']['fd_password']}}"
+  tasks:
+    - include_role: 
+        name: new_fd_password

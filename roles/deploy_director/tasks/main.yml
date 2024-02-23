@@ -61,11 +61,6 @@
       vars:
         ansible_remote_tmp: '$TMPDIR'
 
-# FIXME
-- name: asdsadads
-  debug:
-    msg: "{{ hostvars }}"
-
 - name: Пересоздаём настройки Director'а
   vars:
     bacula_storage_config_dir: /etc/bacula/storage.d/
@@ -148,8 +143,8 @@
 
           with_items: "{{ groups['bacula_storage_daemons'] | map('extract', hostvars) | list }}"
 
-        - name: Проверка получившейся конфигурации
+        - name: Проверка итоговой конфигурации Director'а
           lineinfile:
             line: ""
             path:  /etc/bacula/bacula-dir.conf
-            validate: "/usr/sbin/bacula-dir -t -c /etc/bacula/bacula-dir.conf # %s"
+            validate: /usr/sbin/bacula-dir -t -c %s

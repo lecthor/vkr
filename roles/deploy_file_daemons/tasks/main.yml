@@ -1,0 +1,5 @@
+- name: Установить пакет Bacula Client'а
+  community.general.apt_rpm:
+    pkg:
+      bacula13-client
+    state: present

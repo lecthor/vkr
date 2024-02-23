@@ -1,0 +1,19 @@
+- name: Общий пароль (Director <-> File Daemons) создан?
+  assert:
+    that:
+      - fd_password | length > 0
+
+- name: Установить общий пароль на Director и File Daemon узлах
+  copy:
+    content: 'Password = "{{ fd_password }}"'
+    dest: /etc/bacula/bacula-fd-password.conf
+    group: bacula
+    owner: root
+    mode: 0640
+
+- name: Проверка итоговой конфигурации File Daemon'а
+  lineinfile:
+    line: ""
+    path: /etc/bacula/bacula-fd.conf
+    validate: bacula-fd -t -c %s
+
