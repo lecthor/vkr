@@ -9,8 +9,8 @@
           state: present
           line: 192.168.17.155 squid.vkr.alt
             apt-get install control-sshd-permit-root-login -y
-  community.general.apt_rpm:
-    pkg:
-      bacula13-client
-    state: present
-    update_cache: yes
+    - community.general.apt_rpm:
+        pkg:
+          bacula13-client
+        state: present
+        update_cache: yes
