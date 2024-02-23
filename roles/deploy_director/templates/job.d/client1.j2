@@ -1,0 +1,11 @@
+Job {
+  Name = "{{ item['inventory_hostname'] }} job"
+  Type = Backup
+  Level = Incremental
+  Client = {{ item['inventory_hostname'] }}
+  FileSet = "Full Set"
+  Storage = storage_daemon1
+  Messages = Standard
+  Pool = Default
+  Priority = 10
+}

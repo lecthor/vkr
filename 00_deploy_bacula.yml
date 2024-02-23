@@ -6,14 +6,14 @@
     - include_role:
         name: deploy_director
 
-          #- hosts: bacula_storage_daemons
-          #  tasks:
-          #    - include_role:
-          #        name: deploy_storage_daemons
-          #
-          #- hosts: bacula_director:bacula_storage_daemons
-          #  vars:
-          #    sd_password: "{{hostvars['bacula_director']['sd_password']}}"
-          #  tasks:
-          #    - include_role: 
-          #        name: new_sd_password
+- hosts: bacula_storage_daemons
+  tasks:
+    - include_role:
+        name: deploy_storage_daemons
+
+- hosts: bacula_director:bacula_storage_daemons
+  vars:
+    sd_password: "{{hostvars['bacula_director']['sd_password']}}"
+  tasks:
+    - include_role: 
+        name: new_sd_password

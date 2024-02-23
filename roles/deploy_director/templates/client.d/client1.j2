@@ -1,0 +1,10 @@
+Client {
+  Name            = {{ item['inventory_hostname'] }}
+  Address         = {{ item['ansible_host'] }}
+  FDPort          = 9102
+  Catalog         = MyCatalog
+@/etc/bacula/bacula-fd-password.conf
+  File Retention  = 30 days          # 30 days
+  Job Retention   = 6 months         # six months
+  AutoPrune       = yes              # Prune expired Jobs/Files
+}

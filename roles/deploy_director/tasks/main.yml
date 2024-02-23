@@ -1,84 +1,155 @@
-#- name: Установить пакет Bacula Director'а
-#  community.general.apt_rpm:
-#    pkg:
-#      bacula13-director-postgresql
-#    state: present
-#
-#- name:  Пакет-зависимость для модуля postgresql_ping
-#  community.general.apt_rpm:
-#    pkg:
-#      python3-module-psycopg2
-#    state: present
-#
-#- name: Установить БД, в которой Director Daemon будет хранить свои данные
-#  community.general.apt_rpm:
-#    pkg:
-#      postgresql16-server
-#    state: present
-#
-#- name: Проверяем не была ли PostgreSQL инициализирована ранее
-#  ansible.builtin.stat:
-#    path: /var/lib/pgsql/data/pg_hba.conf
-#  register: postgres_data
-#
-#- name: Инициализируем PostgreSQL
-#  shell: /etc/init.d/postgresql initdb
-#  when: not postgres_data.stat.exists
-#
-#- name: Запускаем сервер PostgreSQL
-#  service:
-#    name: postgresql
-#    state: started
-#
-#- name: Инициализируем базу данных для Bacula
-#  block:
-#    - name:  Проверяем не содержатся ли данные Bacula в PostgreSQL?
-#      postgresql_ping:
-#        db: bacula
-#      register: bacula_postgres
-#
-#    - name: Инициализация БД
-#      shell: "./{{item}}"
-#      args:
-#        chdir: /usr/share/bacula/scripts
-#      with_items:
-#        - create_bacula_database
-#        - make_bacula_tables
-#        - grant_bacula_privileges
-#      when: not bacula_postgres.is_available
-#  become: true
-#  become_user: postgres
-#  become_method: su
-#  become_flags: '-s /bin/sh'
-#  vars:
-#    ansible_remote_tmp: '$TMPDIR'
-#
-#- name: asdsadads
-#  debug:
-#    msg: "{{ hostvars }}"
-- name: xxx
-  file:
-    path: /etc/bacula/storage.d/file.conf
-    state: absent
+- name: Установить пакет Bacula Director'а
+  community.general.apt_rpm:
+    pkg:
+      bacula13-director-postgresql
+    state: present
 
-- name: Создаём файл с описаниями Storage Daemon'ов
-  lineinfile:
-    path: /etc/bacula/storage.d/file.conf
-    mode: 0660
-    group: bacula
-    owner: root
-    create: true
-    # Проверять надо не созданный файл, а общий файл конфигурации, в который вставляется содержимое
-    # созданного файла. Использую костылец, т.к. validate требует наличи %s в команде
-    validate: "/usr/sbin/bacula-dir -t -c /etc/bacula/bacula-dir.conf # %s"
-    line: |
-      Storage {
-        Name = {{ hostvars[item]['inventory_hostname'] }}
-        Address = {{ ansible_host }}
-        SDPort = 9103
-      @/etc/bacula/bacula-sd-password.conf
-        Device = FileStorage
-        Media Type = File
-      }
+- name: Установить пакет Bacula Console
+  community.general.apt_rpm:
+    pkg:
+      bacula13-console
+    state: present
 
-  with_items: "{{ groups['bacula_storage_daemons'] }}"
+- name: Устанавливаем и настраиваем Базу Данных для Bacula
+  block:
+    - name:  Пакет-зависимость для модуля postgresql_ping
+      community.general.apt_rpm:
+        pkg:
+          python3-module-psycopg2
+        state: present
+
+    - name: Установить БД, в которой Director Daemon будет хранить свои данные
+      community.general.apt_rpm:
+        pkg:
+          postgresql16-server
+        state: present
+
+    - name: Проверяем не была ли PostgreSQL инициализирована ранее
+      ansible.builtin.stat:
+        path: /var/lib/pgsql/data/pg_hba.conf
+      register: postgres_data
+
+    - name: Инициализируем PostgreSQL
+      shell: /etc/init.d/postgresql initdb
+      when: not postgres_data.stat.exists
+
+    - name: Запускаем сервер PostgreSQL
+      service:
+        name: postgresql
+        state: started
+
+    - name: Инициализируем базу данных для Bacula
+      block:
+        - name:  Проверяем не содержатся ли данные Bacula в PostgreSQL?
+          postgresql_ping:
+            db: bacula
+          register: bacula_postgres
+
+        - name: Инициализация БД
+          shell: "./{{item}}"
+          args:
+            chdir: /usr/share/bacula/scripts
+          with_items:
+            - create_bacula_database
+            - make_bacula_tables
+            - grant_bacula_privileges
+          when: not bacula_postgres.is_available
+      become: true
+      become_user: postgres
+      become_method: su
+      become_flags: '-s /bin/sh'
+      vars:
+        ansible_remote_tmp: '$TMPDIR'
+
+# FIXME
+- name: asdsadads
+  debug:
+    msg: "{{ hostvars }}"
+
+- name: Пересоздаём настройки Director'а
+  vars:
+    bacula_storage_config_dir: /etc/bacula/storage.d/
+    bacula_job_config_dir:     /etc/bacula/job.d/
+    bacula_client_config_dir:  /etc/bacula/client.d/
+  block:
+    - name: Пересоздаём настройки хранилищ
+      block:
+        - file:
+            path: "{{ bacula_storage_config_dir }}"
+            state: absent
+
+        - file:
+            path: "{{ bacula_storage_config_dir }}"
+            state: directory
+            owner: root
+            group: bacula
+            mode:  0770
+
+    - name: Пересоздаём настройки клиентов (File Daemons)
+      block:
+        - file:
+            path: "{{ bacula_client_config_dir }}"
+            state: absent
+
+        - file:
+            path: "{{ bacula_client_config_dir }}"
+            state: directory
+            owner: root
+            group: bacula
+            mode:  0770
+
+        - template:
+            src: "templates/client.d/{{ item['inventory_hostname'] }}.j2"
+            dest: "{{ bacula_client_config_dir }}{{ item['inventory_hostname'] }}.conf"
+            owner: root
+            group: bacula
+            mode: 0640
+            backup: yes
+          with_items: "{{ groups['bacula_file_daemons'] | map('extract', hostvars) | list }}"
+
+    - name: Пересоздаём настройки заданий
+      block:
+        - file:
+            path: "{{ bacula_job_config_dir }}"
+            state: absent
+
+        - file:
+            path: "{{ bacula_job_config_dir }}"
+            state: directory
+            owner: root
+            group: bacula
+            mode:  0770
+
+        - template:
+            src: "templates/job.d/{{ item['inventory_hostname'] }}.j2"
+            dest: "/etc/bacula/job.d/{{ item['inventory_hostname'] }}.conf"
+            owner: root
+            group: bacula
+            mode: 0640
+            backup: yes
+          with_items: "{{ groups['bacula_file_daemons'] | map('extract', hostvars) | list }}"
+
+        - name: Создаём файл с описаниями Storage Daemon'ов
+          lineinfile:
+            path: "{{ bacula_storage_config_dir}}file_storages.conf"
+            mode: 0660
+            group: bacula
+            owner: root
+            create: true
+            line: |
+              Storage {
+                Name = {{ item['inventory_hostname'] }}
+                Address = {{ item['ansible_host'] }}
+                SDPort = 9103
+              @/etc/bacula/bacula-sd-password.conf
+                Device = FileStorage
+                Media Type = File
+              }
+
+          with_items: "{{ groups['bacula_storage_daemons'] | map('extract', hostvars) | list }}"
+
+        - name: Проверка получившейся конфигурации
+          lineinfile:
+            line: ""
+            path:  /etc/bacula/bacula-dir.conf
+            validate: "/usr/sbin/bacula-dir -t -c /etc/bacula/bacula-dir.conf # %s"
