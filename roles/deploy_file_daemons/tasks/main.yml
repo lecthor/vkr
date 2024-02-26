@@ -13,9 +13,48 @@
     mode: 0640
     backup: yes
 
+- file:
+    path: /etc/bacula/crt
+    state: directory
+    mode: 0750
+    owner: root
+    group: bacula
+
+- name: Нельзя пересоздавать ключи, т.к. без них невозможно расшифровать старые копии
+  ansible.builtin.stat:
+    path: /etc/bacula/crt/certificate.pem
+  register: fd_ssl_key
+
+- block:
+    - name: Generate an OpenSSL private key with the default values (4096 bits, RSA)
+      community.crypto.openssl_privatekey:
+        path: /etc/bacula/crt/certificate.key
+
+    - name: Create simple self-signed certificate
+      community.crypto.x509_certificate:
+        path: /etc/bacula/crt/certificate.cert
+        privatekey_path: /etc/bacula/crt/certificate.key
+        provider: selfsigned
+
+    - name: Find out what the remote machine's mounts are
+      ansible.builtin.slurp:
+        src: /etc/bacula/crt/certificate.key
+      register: cert_key
+
+    - name: Find out what the remote machine's mounts are
+      ansible.builtin.slurp:
+        src: /etc/bacula/crt/certificate.cert
+      register: cert_cert
+
+    - lineinfile:
+        path: /etc/bacula/crt/certificate.pem
+        state: present
+        line: "{{ cert_key['content'] | b64decode }}{{ cert_cert['content'] | b64decode }}"
+        create: yes
+  when: not fd_ssl_key.stat.exists
+
 - name: Проверка итоговой конфигурации File Daemon'а
   lineinfile:
     line: ""
     path: /etc/bacula/bacula-fd.conf
     validate: bacula-fd -t -c %s
-

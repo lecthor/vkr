@@ -34,6 +34,9 @@ FileDaemon {                          # this is me
   WorkingDirectory = /var/lib/bacula
   Pid Directory = /var/run/bacula
   Maximum Concurrent Jobs = 20
+  PKI Keypair     = "/etc/bacula/crt/certificate.pem"
+  PKI Signatures  = Yes
+  PKI Encryption  = Yes
 }
 
 # Send all messages except skipped files back to Director
