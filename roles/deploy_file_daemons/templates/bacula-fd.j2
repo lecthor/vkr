@@ -34,7 +34,7 @@ FileDaemon {                          # this is me
   WorkingDirectory = /var/lib/bacula
   Pid Directory = /var/run/bacula
   Maximum Concurrent Jobs = 20
-  PKI Keypair     = "/etc/bacula/crt/certificate.pem"
+  PKI Keypair     = "{{ encrypt_keypair_path }}"
   PKI Signatures  = Yes
   PKI Encryption  = Yes
 }

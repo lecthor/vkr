@@ -20,38 +20,38 @@
     owner: root
     group: bacula
 
-- name: Нельзя пересоздавать ключи, т.к. без них невозможно расшифровать старые копии
-  ansible.builtin.stat:
-    path: /etc/bacula/crt/certificate.pem
-  register: fd_ssl_key
+- ansible.builtin.stat:
+    path: "{{ encrypt_keypair_path }}"
+  register: encrypt_keys
 
 - block:
-    - name: Generate an OpenSSL private key with the default values (4096 bits, RSA)
+    - name: Генерация закрытого ключа OpenSSL
       community.crypto.openssl_privatekey:
-        path: /etc/bacula/crt/certificate.key
+        path: "{{ encrypt_private_key_path }}"
+        size: "{{ encrypt_key_size | default(2048) }}"
 
-    - name: Create simple self-signed certificate
+    - name: Создаём самоподписанный сертификат
       community.crypto.x509_certificate:
-        path: /etc/bacula/crt/certificate.cert
-        privatekey_path: /etc/bacula/crt/certificate.key
+        path: "{{ encrypt_private_cert_path }}"
+        privatekey_path: "{{ encrypt_private_key_path }}"
         provider: selfsigned
 
-    - name: Find out what the remote machine's mounts are
-      ansible.builtin.slurp:
-        src: /etc/bacula/crt/certificate.key
+    - ansible.builtin.slurp:
+        src: "{{ encrypt_private_key_path }}"
       register: cert_key
 
-    - name: Find out what the remote machine's mounts are
-      ansible.builtin.slurp:
-        src: /etc/bacula/crt/certificate.cert
+    - ansible.builtin.slurp:
+        src: "{{ encrypt_private_cert_path }}"
       register: cert_cert
 
-    - lineinfile:
-        path: /etc/bacula/crt/certificate.pem
+    - name: Создаём криптопару для шифрования резервных копий
+      lineinfile:
+        path: "{{ encrypt_keypair_path }}"
         state: present
         line: "{{ cert_key['content'] | b64decode }}{{ cert_cert['content'] | b64decode }}"
         create: yes
-  when: not fd_ssl_key.stat.exists
+  # Ключи должны быть созданы только один раз, иначе не сможем расшифровать старые резервные копии
+  when: not encrypt_keys.stat.exists
 
 - name: Проверка итоговой конфигурации File Daemon'а
   lineinfile:
