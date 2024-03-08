@@ -37,15 +37,18 @@
     - service:
         name: bacula-fd
         state: restarted
+        enabled: yes
 
 - hosts: bacula_storage_daemons
   tasks:
     - service:
         name: bacula-sd
         state: restarted
+        enabled: yes
 
 - hosts: bacula_director
   tasks:
     - service:
         name: bacula-dir
         state: restarted
+        enabled: yes

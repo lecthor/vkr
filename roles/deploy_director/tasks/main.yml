@@ -37,6 +37,7 @@
       service:
         name: postgresql
         state: started
+        enabled: yes
 
     - name: Инициализируем базу данных для Bacula
       block:
