@@ -30,8 +30,12 @@
       register: postgres_data
 
     - name: Инициализируем PostgreSQL
-      shell: /etc/init.d/postgresql initdb
+      shell: /usr/bin/initdb -D /var/lib/pgsql/data -k
       when: not postgres_data.stat.exists
+      become: true
+      become_user: postgres
+      become_method: su
+      become_flags: '-s /bin/sh'
 
     - name: Запускаем сервер PostgreSQL
       service:
