@@ -1,0 +1,77 @@
+- name: Ключ для сертификата доморощенного УЦ
+  local_action:
+    module: community.crypto.openssl_privatekey_pipe
+  register: ownca_key
+  run_once: yes
+  no_log:   yes
+
+- name: Запрос на выпуск сертификата
+  local_action:
+    module: community.crypto.openssl_csr_pipe
+    privatekey_content: "{{ ownca_key.privatekey }}"
+    common_name: Ansible CA
+    use_common_name_for_san: no
+    basic_constraints:
+      - 'CA:TRUE'
+    basic_constraints_critical: yes
+    key_usage:
+      - keyCertSign
+    key_usage_critical: yes
+  register: ca_csr
+  run_once: yes
+  no_log:   yes
+
+- name: Создать самоподписанный сертификат УЦ
+  local_action:
+    module: community.crypto.x509_certificate_pipe
+    csr_content: "{{ ca_csr.csr }}"
+    privatekey_content: "{{ ownca_key.privatekey }}"
+    provider: selfsigned
+    force:    yes # Пересоздать сертификат даже если он уже существует
+  run_once: yes
+  no_log:   yes
+  register: ownca_data
+
+- name: Каталоги для TLS
+  file:
+    path: "{{ tls_stuff_dir }}{{item}}"
+    state: directory
+    owner: bacula
+    group: bacula
+    mode: 0700
+    recurse: yes
+  with_items:
+    - keys
+    - certs
+
+- name: Закрытые ключи для конечных узлов
+  community.crypto.openssl_privatekey:
+    path: "{{ tls_stuff_dir}}/keys/host.key"
+  register: endpoint_pkey_data
+  no_log:   yes
+
+- name: Запросы на выпуск сертификатов для узлов
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ endpoint_pkey_data.filename }}"
+    common_name: "IP:{{ansible_host}}"
+  register: endpoint_csr
+
+- name: Подпись сертификатов узлов общим корневым сертификатом
+  community.crypto.x509_certificate:
+    path:                      "{{tls_stuff_dir}}/certs/host.pem"
+    csr_content:               "{{ endpoint_csr.csr }}"
+    provider:                  ownca
+    ownca_content:             "{{ ownca_data.certificate }}"
+    ownca_privatekey_content:  "{{ ownca_key.privatekey }}"
+    ownca_not_after:           +3650d # Срок действия истекает через 10 лет
+    ownca_not_before:          "-1d"  # Действителен с вчерашнего дня
+    force:                     yes    # Пересоздать сертификат даже если он уже существует
+  no_log:   yes
+
+- name: Сертификат УЦ должен быть среди корневых
+  copy:
+    content: "{{ownca_data.certificate}}"
+    group: bacula
+    owner: bacula
+    mode:  0644
+    dest: "{{ tls_stuff_dir }}/certs/root.pem"
