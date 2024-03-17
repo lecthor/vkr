@@ -13,6 +13,8 @@
 Director {
   Name = {{ hostvars['bacula_director']['inventory_hostname'] }}
 @/etc/bacula/bacula-fd-password.conf
+  TLS Verify Peer = yes
+{% include '/templates/tls_params.j2' %}
 }
 
 #
@@ -37,6 +39,7 @@ FileDaemon {                          # this is me
   PKI Keypair     = "{{ encrypt_keypair_path }}"
   PKI Signatures  = Yes
   PKI Encryption  = Yes
+{% include '/templates/tls_params.j2' %}
 }
 
 # Send all messages except skipped files back to Director

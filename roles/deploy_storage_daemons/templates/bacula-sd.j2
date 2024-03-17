@@ -16,6 +16,7 @@ Storage {                          # definition of myself
   WorkingDirectory = "/var/lib/bacula"
   Pid Directory = "/var/run/bacula"
   Maximum Concurrent Jobs = 20
+{% include '/templates/tls_params.j2' %}
 }
 
 #
@@ -24,6 +25,8 @@ Storage {                          # definition of myself
 Director {
   Name = bacula_director
 @/etc/bacula/bacula-sd-password.conf
+  TLS Verify Peer = yes
+{% include '/templates/tls_params.j2' %}
 }
 
 #

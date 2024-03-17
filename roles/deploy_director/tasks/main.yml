@@ -156,6 +156,7 @@
               @/etc/bacula/bacula-sd-password.conf
                 Device = FileStorage
                 Media Type = File
+                {{ lookup('ansible.builtin.template', './templates/tls_params.j2') }}
               }
 
           with_items: "{{ groups['bacula_storage_daemons'] | map('extract', hostvars) | list }}"
