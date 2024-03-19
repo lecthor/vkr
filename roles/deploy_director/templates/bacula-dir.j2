@@ -7,6 +7,8 @@ Director {                            # define myself
   Maximum Concurrent Jobs = 1
 @/etc/bacula/bacula-dir-password.conf
   Messages = Daemon
+  TLS Verify Peer = yes
+{% include '/templates/tls_params.j2' %}
 }
 
 # Generic catalog service

@@ -52,6 +52,7 @@
   community.crypto.openssl_csr_pipe:
     privatekey_path: "{{ endpoint_pkey_data.filename }}"
     common_name: "IP:{{ansible_host}}"
+    subject_alt_name: "IP:{{ansible_host}}"
   register: endpoint_csr
 
 - name: Подпись сертификатов узлов общим корневым сертификатом
