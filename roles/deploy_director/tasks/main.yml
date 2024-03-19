@@ -10,6 +10,8 @@
       bacula13-console
     state: present
 
+- include_tasks: roles/common/tasks/opt_bacula.yml
+
 - name: Устанавливаем и настраиваем Базу Данных для Bacula
   block:
     - name:  Пакет-зависимость для модуля postgresql_ping

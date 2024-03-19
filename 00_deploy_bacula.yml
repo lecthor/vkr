@@ -1,3 +1,9 @@
+- hosts: all
+  tags: new-tls-credentials
+  tasks:
+    - include_role:
+        name: setup_tls
+
 - hosts: bacula_director
   tasks:
     - set_fact:
@@ -31,12 +37,6 @@
   tasks:
     - include_role:
         name: new_fd_password
-
-- hosts: all
-  tags: new-tls-credentials
-  tasks:
-    - include_role:
-        name: setup_tls
 
 - hosts: bacula_file_daemons
   tags:

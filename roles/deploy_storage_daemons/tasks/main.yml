@@ -4,6 +4,8 @@
       bacula13-storage
     state: present
 
+- include_tasks: roles/common/tasks/opt_bacula.yml
+
 - name: Настроить Storage Daemon'ы на работу с Director'ом
   template:
     src: templates/bacula-sd.j2

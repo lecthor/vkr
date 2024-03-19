@@ -1,0 +1,8 @@
+- name: Создать каталог и дать нужные права
+  file:
+    path: /opt/bacula
+    state: directory
+    owner: bacula
+    group: bacula
+    mode:  0750
+    recurse: yes

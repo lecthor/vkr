@@ -5,6 +5,8 @@
     state: present
     update_cache: yes
 
+- include_tasks: roles/common/tasks/opt_bacula.yml
+
 - template:
     src: templates/bacula-fd.j2
     dest: /etc/bacula/bacula-fd.conf

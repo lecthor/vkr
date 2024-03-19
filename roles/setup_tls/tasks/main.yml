@@ -3,7 +3,7 @@
     module: community.crypto.openssl_privatekey_pipe
   register: ownca_key
   run_once: yes
-  no_log:   no
+  no_log:   yes
 
 - name: Запрос на выпуск сертификата
   local_action:
@@ -19,7 +19,7 @@
     key_usage_critical: yes
   register: ca_csr
   run_once: yes
-  no_log:   no
+  no_log:   yes
 
 - name: Создать самоподписанный сертификат УЦ
   local_action:
@@ -29,15 +29,13 @@
     provider: selfsigned
     force:    yes # Пересоздать сертификат даже если он уже существует
   run_once: yes
-  no_log:   no
+  no_log:   yes
   register: ownca_data
 
 - name: Каталоги для TLS
   file:
     path: "{{ tls_stuff_dir }}/{{item}}"
     state: directory
-    owner: bacula
-    group: bacula
     mode: 0750
     recurse: yes
   with_items:
@@ -48,7 +46,7 @@
   community.crypto.openssl_privatekey:
     path: "{{ tls_stuff_dir}}/keys/host.key"
   register: endpoint_pkey_data
-  no_log:   no
+  no_log:   yes
 
 - name: Запросы на выпуск сертификатов для узлов
   community.crypto.openssl_csr_pipe:
@@ -66,12 +64,10 @@
     ownca_not_after:           +3650d # Срок действия истекает через 10 лет
     ownca_not_before:          "-1d"  # Действителен с вчерашнего дня
     force:                     yes    # Пересоздать сертификат даже если он уже существует
-  no_log:   no
+  no_log:   yes
 
 - name: Сертификат УЦ должен быть среди корневых
   copy:
     content: "{{ownca_data.certificate}}"
-    group: bacula
-    owner: bacula
     mode:  0644
     dest: "{{ tls_stuff_dir }}/certs/root.pem"
