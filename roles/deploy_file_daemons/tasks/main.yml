@@ -16,10 +16,10 @@
     backup: yes
 
 - file:
-    path: /etc/bacula/crt
+    path: /opt/bacula/encryption_credentials
     state: directory
     mode: 0750
-    owner: root
+    owner: bacula
     group: bacula
 
 - ansible.builtin.stat:
